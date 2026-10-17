@@ -7,8 +7,10 @@ Uso:
     python trend_agent.py "TikTok y nichos de belleza"
 """
 import asyncio
+import re
 import sys
 from datetime import date
+from pathlib import Path
 
 from claude_agent_sdk import (
     AssistantMessage,
@@ -58,13 +60,22 @@ async def main(tema: str) -> None:
         f"Hoy es {date.today():%d-%m-%Y}. Dame ideas tendencia para monetizar "
         f"en Colombia. Enfoque: {tema}"
     )
+    partes: list[str] = []
     async for message in query(prompt=prompt, options=options):
         if isinstance(message, AssistantMessage):
             for block in message.content:
                 if isinstance(block, TextBlock):
                     print(block.text)
+                    partes.append(block.text)
         elif isinstance(message, ResultMessage) and message.total_cost_usd:
             print(f"\n(costo: ${message.total_cost_usd:.4f} USD)")
+
+    if partes:
+        slug = re.sub(r"[^a-z0-9]+", "-", tema.lower()).strip("-")[:50] or "general"
+        destino = Path("resultados") / f"{date.today():%Y-%m-%d}-{slug}.md"
+        destino.parent.mkdir(exist_ok=True)
+        destino.write_text("\n".join(partes), encoding="utf-8")
+        print(f"\nGuardado en {destino}")
 
 
 if __name__ == "__main__":
