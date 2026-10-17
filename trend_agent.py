@@ -8,6 +8,7 @@ Uso:
 """
 import asyncio
 import sys
+from datetime import date
 
 from claude_agent_sdk import (
     AssistantMessage,
@@ -38,16 +39,25 @@ Reglas:
 - Prioriza ideas realistas para el mercado colombiano (poder adquisitivo,
   regionalismos, fechas como Black Friday, prima, Amor y Amistad, Navidad).
 - Entrega entre 5 y 8 ideas ordenadas de mayor a menor potencial.
+- Cuando el enfoque lo pida, combina cada idea con IA generativa para crear
+  contenido (Gemini, Veo, Imagen, NotebookLM, etc.): qué parte del flujo
+  automatiza la IA (guiones, imágenes, video, voz, subtítulos), costo/plan
+  gratuito disponible y límites o riesgos (etiquetado de contenido sintético,
+  derechos de autor, políticas de monetización de cada plataforma).
 - Responde en español."""
 
 
 async def main(tema: str) -> None:
     options = ClaudeAgentOptions(
         system_prompt=SYSTEM_PROMPT,
+        setting_sources=[],
         allowed_tools=["WebSearch", "WebFetch"],
         max_turns=15,
     )
-    prompt = f"Dame ideas tendencia para monetizar en Colombia. Enfoque: {tema}"
+    prompt = (
+        f"Hoy es {date.today():%d-%m-%Y}. Dame ideas tendencia para monetizar "
+        f"en Colombia. Enfoque: {tema}"
+    )
     async for message in query(prompt=prompt, options=options):
         if isinstance(message, AssistantMessage):
             for block in message.content:
